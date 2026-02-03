@@ -91,11 +91,23 @@ jobs:
       - name: Creating rclone config
         run: |
           mkdir -p $HOME/.config/rclone/
-          echo '[cache]' > $HOME/.config/rclone/rclone.conf
-          echo 'type = sftp' >> $HOME/.config/rclone/rclone.conf
-          echo 'host = ${{ secrets.STORAGE_HOST }}' >> $HOME/.config/rclone/rclone.conf
-          echo 'user = storage' >> $HOME/.config/rclone/rclone.conf
-          echo 'key_pem = ${{ secrets.STORAGE_KEY }}' >> $HOME/.config/rclone/rclone.conf
+          
+          # 保存SSH密钥到临时文件
+          SSH_KEY_FILE="/tmp/storage_key.pem"
+          echo "${{ secrets.STORAGE_KEY }}" > "$SSH_KEY_FILE"
+          chmod 600 "$SSH_KEY_FILE"
+          
+          # 创建rclone配置
+          cat > $HOME/.config/rclone/rclone.conf << EOF
+          [cache]
+          type = sftp
+          host = ${{ secrets.STORAGE_HOST }}
+          user = storage
+          key_file = $SSH_KEY_FILE
+          EOF
+          
+          echo "Rclone config created:"
+          cat $HOME/.config/rclone/rclone.conf
 
       - name: Modifying args.gn (arm)
         if: matrix.platform == 'arm'
@@ -154,11 +166,20 @@ jobs:
       - name: Creating rclone config
         run: |
           mkdir -p $HOME/.config/rclone/
-          echo '[cache]' > $HOME/.config/rclone/rclone.conf
-          echo 'type = sftp' >> $HOME/.config/rclone/rclone.conf
-          echo 'host = ${{ secrets.STORAGE_HOST }}' >> $HOME/.config/rclone/rclone.conf
-          echo 'user = storage' >> $HOME/.config/rclone/rclone.conf
-          echo 'key_pem = ${{ secrets.STORAGE_KEY }}' >> $HOME/.config/rclone/rclone.conf
+          
+          # 保存SSH密钥到临时文件
+          SSH_KEY_FILE="/tmp/storage_key.pem"
+          echo "${{ secrets.STORAGE_KEY }}" > "$SSH_KEY_FILE"
+          chmod 600 "$SSH_KEY_FILE"
+          
+          # 创建rclone配置
+          cat > $HOME/.config/rclone/rclone.conf << EOF
+          [cache]
+          type = sftp
+          host = ${{ secrets.STORAGE_HOST }}
+          user = storage
+          key_file = $SSH_KEY_FILE
+          EOF
 
 
       - name: Downloading artifact (arm)
@@ -251,8 +272,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          owner: "kiwibrowser"
-          repo: "src.next"
+          owner: "JiayueMeng128"  # 修改为你的用户名
+          repo: "src.next"         # 你的仓库名
           tag_name: ${{ github.run_id }}
           release_name: Generation ${{ github.run_id }}
           draft: false
@@ -260,12 +281,12 @@ jobs:
           body_path: release_notes.txt
 
       - name: Signing and uploading release to GitHub and send to the Play Store
-        if: ${{ github.repository_owner == 'kiwibrowser' && contains(github.event.inputs.prepareRelease, 'yes') }}
+        if: ${{ github.repository_owner == 'JiayueMeng128' && contains(github.event.inputs.prepareRelease, 'yes') }}  # 修改为你的用户名
         run: |
           curl 'https://${{ secrets.RELEASE_HOST }}/?run_id=${{ github.run_id }}&dk=${{ secrets.DEPLOY_KEY }}&publish=1&target=aab'
 
       - name: Downloading artifacts from storage
-        if: ${{ github.repository_owner == 'kiwibrowser' }}
+        if: ${{ github.repository_owner == 'JiayueMeng128' }}  # 修改为你的用户名
         run: |
           rclone copy --transfers=128 --retries=100 cache:kiwibrowser-builds/${{ github.run_id }}/arm/ ./apk-arm 
           rclone copy --transfers=128 --retries=100 cache:kiwibrowser-builds/${{ github.run_id }}/arm64/ ./apk-arm64
@@ -273,7 +294,7 @@ jobs:
           rclone copy --transfers=128 --retries=100 cache:kiwibrowser-builds/${{ github.run_id }}/x64/ ./apk-x64
 
       - name: Uploading release asset (arm-signed)
-        if: ${{ github.repository_owner == 'kiwibrowser' }}
+        if: ${{ github.repository_owner == 'JiayueMeng128' }}  # 修改为你的用户名
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -284,7 +305,7 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
 
       - name: Uploading release asset (arm64-signed)
-        if: ${{ github.repository_owner == 'kiwibrowser' }}
+        if: ${{ github.repository_owner == 'JiayueMeng128' }}  # 修改为你的用户名
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -295,7 +316,7 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
 
       - name: Uploading release asset (x86-signed)
-        if: ${{ github.repository_owner == 'kiwibrowser' }}
+        if: ${{ github.repository_owner == 'JiayueMeng128' }}  # 修改为你的用户名
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -306,7 +327,7 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
 
       - name: Uploading release asset (x64-signed)
-        if: ${{ github.repository_owner == 'kiwibrowser' }}
+        if: ${{ github.repository_owner == 'JiayueMeng128' }}  # 修改为你的用户名
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -317,7 +338,7 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
 
       - name: Uploading dev asset (arm-signed)
-        if: ${{ github.repository_owner == 'kiwibrowser' }}
+        if: ${{ github.repository_owner == 'JiayueMeng128' }}  # 修改为你的用户名
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -328,7 +349,7 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
 
       - name: Uploading dev asset (arm64-signed)
-        if: ${{ github.repository_owner == 'kiwibrowser' }}
+        if: ${{ github.repository_owner == 'JiayueMeng128' }}  # 修改为你的用户名
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -339,7 +360,7 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
 
       - name: Uploading dev asset (x86-signed)
-        if: ${{ github.repository_owner == 'kiwibrowser' }}
+        if: ${{ github.repository_owner == 'JiayueMeng128' }}  # 修改为你的用户名
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -350,7 +371,7 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
 
       - name: Uploading dev asset (x64-signed)
-        if: ${{ github.repository_owner == 'kiwibrowser' }}
+        if: ${{ github.repository_owner == 'JiayueMeng128' }}  # 修改为你的用户名
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -371,7 +392,7 @@ jobs:
           COMMIT_MSG=$(<./commit_message.txt)
           PAYLOAD=$(jq -n \
                       --arg username "Kiwi Builder (Next)" \
-                      --arg content "A new build of Kiwi Browser Next (preview version) is available. This version will replace your currently installed Kiwi Browser (com.kiwibrowser.browser) <@&913196471787065344> - https://github.com/kiwibrowser/src.next/releases/tag/${{ github.run_id }} $COMMIT_MSG" \
+                      --arg content "A new build of Kiwi Browser Next (preview version) is available. This version will replace your currently installed Kiwi Browser (com.kiwibrowser.browser) <@&913196471787065344> - https://github.com/JiayueMeng128/src.next/releases/tag/${{ github.run_id }} $COMMIT_MSG" \
                       '{username: $username, content: $content}')
           curl -H 'Content-Type: application/json' -X POST -d "$PAYLOAD" ${{ secrets.DISCORD_WEBHOOK }}
       
@@ -381,10 +402,9 @@ jobs:
         run: |
           COMMIT_MSG=$(<./commit_message.txt)
           PAYLOAD=$(jq -n \
-                      --arg text "A new build of Kiwi Browser Next (preview version) is available. Link: [${{ github.run_id }}](https://github.com/kiwibrowser/src.next/releases/tag/${{ github.run_id }}) $COMMIT_MSG" \
+                      --arg text "A new build of Kiwi Browser Next (preview version) is available. Link: [${{ github.run_id }}](https://github.com/JiayueMeng128/src.next/releases/tag/${{ github.run_id }}) $COMMIT_MSG" \
                       --arg chat_id "@kiwibrowserbuilds" \
                       --arg parse_mode "markdown" \
-                      --argjson reply_markup '{"inline_keyboard": [[{"text": "x86", "url": "https://github.com/kiwibrowser/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser-x86-${{ github.run_id }}-github.apk"},{"text": "x64", "url": "https://github.com/kiwibrowser/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser-x64-${{ github.run_id }}-github.apk"}],[{"text": "arm", "url": "https://github.com/kiwibrowser/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser-arm-${{ github.run_id }}-github.apk"},{"text": "arm64", "url": "https://github.com/kiwibrowser/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser-arm64-${{ github.run_id }}-github.apk"}],[{"text": ".DEV x86", "url": "https://github.com/kiwibrowser/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser.dev-x86-${{ github.run_id }}-github.apk"},{"text": ".DEV x64", "url": "https://github.com/kiwibrowser/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser.dev-x64-${{ github.run_id }}-github.apk"}],[{"text": ".DEV arm", "url": "https://github.com/kiwibrowser/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser.dev-arm-${{ github.run_id }}-github.apk"},{"text": ".DEV arm64", "url": "https://github.com/kiwibrowser/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser.dev-arm64-${{ github.run_id }}-github.apk"}]]}' \
+                      --argjson reply_markup '{"inline_keyboard": [[{"text": "x86", "url": "https://github.com/JiayueMeng128/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser-x86-${{ github.run_id }}-github.apk"},{"text": "x64", "url": "https://github.com/JiayueMeng128/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser-x64-${{ github.run_id }}-github.apk"}],[{"text": "arm", "url": "https://github.com/JiayueMeng128/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser-arm-${{ github.run_id }}-github.apk"},{"text": "arm64", "url": "https://github.com/JiayueMeng128/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser-arm64-${{ github.run_id }}-github.apk"}],[{"text": ".DEV x86", "url": "https://github.com/JiayueMeng128/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser.dev-x86-${{ github.run_id }}-github.apk"},{"text": ".DEV x64", "url": "https://github.com/JiayueMeng128/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser.dev-x64-${{ github.run_id }}-github.apk"}],[{"text": ".DEV arm", "url": "https://github.com/JiayueMeng128/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser.dev-arm-${{ github.run_id }}-github.apk"},{"text": ".DEV arm64", "url": "https://github.com/JiayueMeng128/src.next/releases/download/${{ github.run_id }}/com.kiwibrowser.browser.dev-arm64-${{ github.run_id }}-github.apk"}]]}' \
                       '{text: $text, chat_id: $chat_id, parse_mode: $parse_mode, reply_markup: $reply_markup}')
           curl -H "Content-Type: application/json" -X POST -d "$PAYLOAD" https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage
-
